@@ -1,3 +1,4 @@
+import json
 import os
 
 from src.AI.OpenAIClient import OpenAIClient
@@ -15,4 +16,5 @@ if __name__ == '__main__':
 
     # Pass the task description to the analyser
     response = screen_record_analyser.get_analysis_of_images(APP_TMP_DIR, client, task_description)
-    print(response)
+    # print json with 4 depth
+    print(json.dumps(json.loads(response), indent=4))
