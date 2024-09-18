@@ -5,38 +5,15 @@ from .LLMInterface import LLMInterface
 import os
 import yaml
 
+from ..Utils import load_key_from_config
+
 
 class OpenAIClient(LLMInterface):
     def __init__(self):
-        self.client = OpenAI(api_key=self.load_key_from_config())
+        self.client = OpenAI(api_key=load_key_from_config(key='open_api_key'))
 
-    """
-    Grab the open_api_key from the config file.
-    Check environment variables if the key is not found in the config file.
-    Throw an error if the key is not found in the config file or environment variables.
-    """
-    @staticmethod
-    def load_key_from_config() -> str:
-
-        # Load the OpenAI API key from the config.yaml file
-        try:
-            with open('config.yml', 'r') as file:
-                config = yaml.safe_load(file)
-                api_key = config.get('open_api_key')
-        except FileNotFoundError:
-            api_key = None
-
-        # Check environment variables if the key is not found in the config file
-        if not api_key:
-            api_key = os.getenv('OPEN_API_KEY')
-
-        # Throw an error if the key is not found in the config file or environment variables
-        if not api_key:
-            raise ValueError("OpenAI API key not found in config file or environment variables")
-
-        return api_key
-
-    def check_frames(self, prompt: str, resolution: str, tokens: int, images_base64: List[str], json_response_model) -> str:
+    def check_frames(self, prompt: str, resolution: str, tokens: int, images_base64: List[str],
+                     json_response_model) -> str:
         messages = [
             {
                 "role": "user",
@@ -71,7 +48,7 @@ class OpenAIClient(LLMInterface):
         else:
             # Sending the request to OpenAI API
             response = self.client.chat.completions.create(
-                model="gpt-4o-mini",
+                model=load_key_from_config(key='model_name'),
                 messages=messages,
                 max_tokens=tokens,
             )

@@ -1,4 +1,5 @@
 import base64
+import logging
 import os
 from io import BytesIO
 from typing import List
@@ -6,13 +7,12 @@ from typing import List
 import cv2
 import numpy as np
 from PIL import Image
-import logging
 
+from src.Utils import load_key_from_config
 from .AI.LLMInterface import LLMInterface
 from .AI.OpenAIClient import OpenAIClient
-from .model.PydanticModels import Process
-
 from .Constants import APP_TMP_DIR
+from .model.PydanticModels import Process
 
 
 # Logic class for handling screen processing and AI interaction
@@ -59,8 +59,8 @@ class ScreenRecordAnalyser:
         logging.info('Checking frames with LLM ...')
         response = client.check_frames(
             prompt=self.get_prompt(task_description),
-            resolution="low",
-            tokens=10000,
+            resolution=load_key_from_config("llm_input_resolution"),
+            tokens=int(load_key_from_config("tokens_count")),
             images_base64=encoded_frames,
             json_response_model=Process
         )
@@ -68,13 +68,14 @@ class ScreenRecordAnalyser:
 
     @staticmethod
     def get_prompt(task_description: str) -> str:
-        return (
-            "You are an AI that meticulously records user a business process flow by looking at screenshots of actions. "
-            "These are frames from a screen recording showing a user conducting work for the task with description: {}. "
-            "A red circle indicates the user has clicked. Provide a description of the overall task or tasks, and the low level actions the user undertakes as part of them. Write sentences as instructions. "
-            "Only return actions or tasks where you have very high confidence, don't ever guess and purely narrate "
-            "what the user does, think critically. If you see a red circle without a button it means the users has probably incorrectly clicked. Ignore these."
-        ).format(task_description)
+        with open('prompts/open_ai.prompt', 'r') as file:
+            # Read the contents of the .prompt file
+            prompt_template = file.read()
+
+        # Use format() or another method to insert the task_description
+        prompt = prompt_template.format(task_description)
+
+        return prompt
 
 
 # Example usage of the ScreenProcessingLogic class

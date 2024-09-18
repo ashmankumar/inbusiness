@@ -1,1 +1,3 @@
-open_api_key: <key>
+model_name: "gpt-4o-mini"
+tokens_count: 2048
+llm_input_resolution: low

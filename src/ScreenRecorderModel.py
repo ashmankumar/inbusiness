@@ -10,6 +10,8 @@ import pyautogui
 from PIL import ImageDraw
 from pynput import mouse, keyboard
 
+from src.Utils import load_key_from_config
+
 APP_TMP_DIR = 'tmp'
 
 # Determine the base directory where the application is running
@@ -19,7 +21,6 @@ else:
     base_dir = os.path.dirname(os.path.abspath(__file__))
 
 # Constants
-SCREENSHOT_REGION_PX_SIZE = 1000
 square_size = 150
 
 
@@ -29,22 +30,25 @@ class ScreenRecorderModel:
         self.stop_event = Event()
         self.app_tmp_dir = APP_TMP_DIR
 
+    @staticmethod
     def take_full_screenshot(self):
         # Generate a filename with a timestamp
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        filename = f"screenshot_{timestamp}.png"
-        full_path = os.path.join(APP_TMP_DIR, filename)
-        screenshot = pyautogui.screenshot()
-        screenshot.save(full_path)
-        self.screenshot_count += 1
-        print(f"Screenshot saved as {full_path}")
+        return pyautogui.screenshot()
 
     def take_screenshot_localised(self, click_x, click_y):
-        region_x = max(click_x - SCREENSHOT_REGION_PX_SIZE // 2, 0)
-        region_y = max(click_y - SCREENSHOT_REGION_PX_SIZE // 2, 0)
+
+        screenshot_region_px_size = float(load_key_from_config("screenshot_region_px_size"))
+
+        if screenshot_region_px_size == 0:
+            screenshot = self.take_full_screenshot()
+            filename = self.save_screenshot(screenshot)
+            print(f"Screenshot saved as {filename} for full resolution")
+
+        region_x = max(click_x - screenshot_region_px_size // 2, 0)
+        region_y = max(click_y - screenshot_region_px_size // 2, 0)
         screen_width, screen_height = pyautogui.size()
-        region_width = min(SCREENSHOT_REGION_PX_SIZE, screen_width - region_x)
-        region_height = min(SCREENSHOT_REGION_PX_SIZE, screen_height - region_y)
+        region_width = min(screenshot_region_px_size, screen_width - region_x)
+        region_height = min(screenshot_region_px_size, screen_height - region_y)
         screenshot = pyautogui.screenshot(region=(int(region_x), int(region_y), int(region_width), int(region_height)))
         draw = ImageDraw.Draw(screenshot)
         square_x = click_x - region_x - square_size // 2
@@ -116,5 +120,3 @@ class ScreenRecorderModel:
     def stop_recording(self, signum, frame):
         print(f"Signal {signum} received. Stopping recording...")
         self.stop_event.set()
-
-
